@@ -5,25 +5,17 @@ import imutils
 from imutils import contours
 
 
-def detectNumbers(card, grayCard):
-    # Temporal until we do the other parts
-    card = cv2.imread("cardToDetect/carta1edge.png")
-    card = cv2.cvtColor(card, cv2.COLOR_BGR2RGB)
+def detectNumbers(card):
 
-    plt.imshow(card)
-    plt.show()
 
-    plt.imshow(card)
-    plt.show()
-
-    grayCard = cv2.cvtColor(card, cv2.COLOR_RGB2GRAY)
+    grayCard = cv2.cvtColor(card, cv2.COLOR_BGR2GRAY)
     grayCard = 255 - grayCard
 
     plt.imshow(grayCard, cmap="gray")
     plt.show()
 
     # Card numbers
-    ref = cv2.imread("cardsTrain/numeroCartes2.png")
+    ref = cv2.imread("train/numeroCartes3.png")
     ref = cv2.cvtColor(ref, cv2.COLOR_BGR2GRAY)
     plt.imshow(ref, cmap="gray")
     plt.show()
@@ -64,6 +56,7 @@ def detectNumbers(card, grayCard):
     plt.imshow(tophat, cmap="gray")
     plt.show()
 
+    """
     # compute the Scharr gradient of the tophat image, then scale
     # the rest back into the range [0, 255]
     gradX = cv2.Sobel(tophat, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
@@ -71,24 +64,14 @@ def detectNumbers(card, grayCard):
     (minVal, maxVal) = (np.min(gradX), np.max(gradX))
     gradX = (255 * ((gradX - minVal) / (maxVal - minVal)))
     gradX = gradX.astype("uint8")
-    plt.imshow(gradX, cmap="gray")
-    plt.show()
+    #plt.imshow(gradX, cmap="gray")
+    #plt.show()
+    """
 
-    # apply a closing operation using the rectangular kernel to help
-    # cloes gaps in between credit card number digits, then apply
-    # Otsu's thresholding method to binarize the image
-    gradX = cv2.morphologyEx(gradX, cv2.MORPH_CLOSE, rectKernel)
-    thresh = cv2.threshold(gradX, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-    # apply a second closing operation to the binary image, again
-    # to help close gaps between credit card number regions
-    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, sqKernel)
-    plt.imshow(thresh, cmap="gray")
-    plt.show()
-    cv2.imwrite("results/thresh.png", thresh)
 
     # find contours in the thresholded image, then initialize the
     # list of digit locations
-    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = cv2.findContours(tophat.copy() , cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     locs = []
 
@@ -102,7 +85,7 @@ def detectNumbers(card, grayCard):
         if ar > 0.0 and ar < 3.5:
             # contours can further be pruned on minimum/maximum width
             # and height
-            if (20 < w < 30) and (50 < h < 100):
+            if (20 < w < 40) and (20 < h < 40):
                 # append the bounding box region of the digits group
                 # to our locations list
                 locs.append((x, y, w, h))
@@ -110,6 +93,7 @@ def detectNumbers(card, grayCard):
     print(locs)
 
     output = []
+
 
     # loop over the 1 groupings of 1-2 digits
     for (i, (gX, gY, gW, gH)) in enumerate(locs):
@@ -126,8 +110,10 @@ def detectNumbers(card, grayCard):
         digitCnts = imutils.grab_contours(digitCnts)
         digitCnts = contours.sort_contours(digitCnts, method="left-to-right")[0]
 
-    conCard = cv2.cvtColor(thresh, cv2.COLOR_GRAY2BGR)
-    cv2.drawContours(conCard, digitCnts, -1, (255, 255, 0), 2)
+    conCard = card
+    cv2.drawContours(conCard, cnts, -1, (255, 255, 0), 2)
+    #plt.imshow(conCard)
+    #plt.show()
 
     # loop over the digit contours
     for c in digitCnts:
@@ -135,7 +121,9 @@ def detectNumbers(card, grayCard):
         # the digit, and resize it to have the same fixed size as
         # the reference OCR-A images
         (x, y, w, h) = cv2.boundingRect(c)
-        roi = group[y:y + h, x:x + w]
+        roi = tophat[y:y + h+10, x:x + w+10]
+
+
         # roi = cv2.resize(roi, (57, 88))
         # initialize a list of template matching scores
         scores = []
@@ -143,7 +131,7 @@ def detectNumbers(card, grayCard):
         for (digit, digitROI) in digits.items():
             # apply correlation-based template matching, take the
             # score, and update the scores list
-            result = cv2.matchTemplate(roi, digitROI, cv2.TM_CCOEFF_NORMED)
+            result = cv2.matchTemplate(tophat, digitROI, cv2.TM_CCOEFF_NORMED)
             (_, score, _, _) = cv2.minMaxLoc(result)
             scores.append(score)
         # the classification for the digit ROI will be the reference
