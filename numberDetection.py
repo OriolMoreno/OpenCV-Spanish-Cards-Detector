@@ -114,7 +114,9 @@ def detectNumbers(card):
     cv2.drawContours(conCard, cnts, -1, (255, 255, 0), 2)
     #plt.imshow(conCard)
     #plt.show()
-
+    binary = tophat > 30
+    plt.imshow(binary)
+    plt.show()
     # loop over the digit contours
     for c in digitCnts:
         # compute the bounding box of the individual digit, extract
@@ -131,7 +133,7 @@ def detectNumbers(card):
         for (digit, digitROI) in digits.items():
             # apply correlation-based template matching, take the
             # score, and update the scores list
-            result = cv2.matchTemplate(tophat, digitROI, cv2.TM_CCOEFF_NORMED)
+            result = cv2.matchTemplate(np.uint8(binary), digitROI, cv2.TM_CCOEFF_NORMED)
             (_, score, _, _) = cv2.minMaxLoc(result)
             scores.append(score)
         # the classification for the digit ROI will be the reference
@@ -141,12 +143,12 @@ def detectNumbers(card):
         groupOutput.append(str(np.argmax(scores)))
 
         # draw the digit classifications around the group
-        cv2.rectangle(card, (gX - 5, gY - 5), (gX + gW + 5, gY + gH + 5), (0, 0, 255), 2)
-        cv2.putText(card, "".join(groupOutput), (gX, gY - 15), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 2)
+        #cv2.rectangle(card, (gX - 5, gY - 5), (gX + gW + 5, gY + gH + 5), (0, 0, 255), 2)
+        #cv2.putText(card, "".join(groupOutput), (gX, gY - 15), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 2)
         # update the output digits list
-        output.extend(groupOutput)
+        #output.extend(groupOutput)
 
-    cv2.imshow("Image", card)
-    cv2.waitKey(0)
+    #cv2.imshow("Image", card)
+    #cv2.waitKey(0)
 
     return groupOutput
