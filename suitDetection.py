@@ -1,8 +1,6 @@
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
-import imutils
-from imutils import contours
+
 
 def findSuit(card):
 
@@ -14,7 +12,7 @@ def findSuit(card):
     cnts = cv2.findContours(opening, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)[-2]
     cntsFiltered = []
     for cnt in cnts:
-        print(cv2.contourArea(cnt))
+        # print(cv2.contourArea(cnt))
         if 1000 > cv2.contourArea(cnt) > 10:
             cntsFiltered.append(cnt)
 

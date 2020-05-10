@@ -4,9 +4,7 @@ import cardDetection
 import cardProcessing
 import numberDetection
 import suitDetection
-import numpy as np
-import imutils
-from imutils import contours
+
 
 #img = cv2.imread("test/cardsBriscaMode.jpg")
 img = cv2.imread("test/cardBlackBackground.jpg")
@@ -26,6 +24,9 @@ for cardFound in cardsFound:
     number = numberDetection.detectNumbers(cropCard)
     cropCard2 = cardFound[10:22, :]
     suit = suitDetection.findSuit(cropCard2)
-
-    print("Number: ", number, " Suit: ", suit)
+    stri = "Number: " + str(number) + ' | Suit: ' + suit
+    print(stri)
+    plt.imshow(cardFound)
+    plt.title(stri)
+    plt.show()
 
